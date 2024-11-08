@@ -1,0 +1,237 @@
+#include <iostream>
+#include <cstring>
+
+using namespace std;
+
+int findLength(char wordToFind[]) {
+	// It will find length of string.
+	int i = 0;
+	int wordlength = 0;
+	while (wordToFind[i] != '\0') {
+		wordlength++;
+		i++;
+	}
+	return wordlength;
+}
+
+int selectWord(char sentence[], char wordToFind[], int wordlength, int& index) {
+	// It will return a number that will be used to determine if we have completely matched a word or not.
+	int s = 0;
+	int k = index;
+	while (s < wordlength) {
+		if (sentence[k] == wordToFind[s]) {
+			k++;
+			s++;
+		}
+		else {
+			index++;
+			break;
+		}
+	}
+	return s;
+}
+
+void duplicateSpaces(char sentence[], int MaxLength) {
+	// It will remove all duplicate spaces from a sentence
+	// It works by counting number of spaces. If there are more than 1 space in a sentence adjacently then it will shift all
+	// the characters from right to left
+	int i = 0, spaceCount = 0;
+	while (i < MaxLength) {
+		spaceCount = 0;
+		if (sentence[i] == ' ') {
+			int k = 0;
+			while (sentence[i + k] == ' ') {
+				spaceCount++;
+				k++;
+			}
+			int s = 1;
+			if (spaceCount > 1) {
+				while (s < MaxLength) {
+					sentence[i + s] = sentence[i + s + spaceCount - 1]; // i + s = original value
+					// + spaceCount = non space value -> -1 = last space value first time will run this way
+					s++;
+				}
+			}
+		}
+		i++;
+	}
+}
+
+void replaceValue(char sentence[], char replacementWord[], char wordToReplace[], int MaxLength) {
+	// This function works by first matching the word to be replaced. Then it calculates the difference between the world to be replaced
+	// and new word. By differnce, it starts shifting to new length from previous length. 
+	int wordLengthOfReplacement = findLength(replacementWord);
+	int wordLengthOfWord = findLength(wordToReplace);
+	int lengthOfSentence = findLength(sentence);
+	int i = 0;
+	while (i < MaxLength) {
+		if (sentence[i] == wordToReplace[0]) {
+			int s = selectWord(sentence, wordToReplace, wordLengthOfWord, i);
+			if (s == wordLengthOfWord) {
+				// This shifting will make space for new word
+				int shift = wordLengthOfReplacement - wordLengthOfWord;
+				if (shift > 0) {
+					int initial = lengthOfSentence;
+					while (initial >= (i + wordLengthOfWord)) {
+						sentence[initial + shift] = sentence[initial];
+						initial--;
+					}
+				}
+				else if (shift < 0) {
+					int initial = i + wordLengthOfWord;
+					while (initial <= lengthOfSentence) {
+						sentence[initial + shift] = sentence[initial];
+						initial++;
+					}
+				}
+
+				s = 0;
+				// This is main loop that will replace spaces that we made with new word
+				while (s < wordLengthOfReplacement) {
+					sentence[i + s] = replacementWord[s];
+					s++;
+				}
+				// This will determine and set the new end of string sentence.
+				lengthOfSentence += shift;
+				sentence[lengthOfSentence] = '\0'; 
+				i += wordLengthOfReplacement;
+			}
+			else {
+				i++; 
+			}
+		}
+		else {
+			i++;
+		}
+	}
+}
+
+int mainFunction(char sentence[], int MaxLength, char wordToFind[], int choice) {
+	// Two cases use this function
+	// This works by callling selectWord to match the word. When word is found. We increase the count by 1 for choice 1. And we use i 
+	// to remove the word for choice 2
+	int wordlength = findLength(wordToFind);
+	int count = 0;
+	int i = 0;
+	while (i < MaxLength) {
+		if (sentence[i] == wordToFind[0]) {
+			int s = selectWord(sentence, wordToFind, wordlength, i);
+			if (s == wordlength) {
+				if (choice == 1) count++;
+				else if (choice == 2) {
+					// First we will replace the word with spaces.
+					s = 0;
+					while (s < wordlength) {
+						sentence[i + s] = ' ';
+						s++;
+					}
+					s = 0;
+					// Then this loop will do shifting for us.
+					while (s < MaxLength) {
+						sentence[i + s] = sentence[i + s + wordlength];
+						s++;
+					}
+				}
+			}
+		}
+		i++;
+	}
+	return count;
+}
+
+bool checks(char sentence[], char inputWord[], int MaxLength) {
+	// This is the check to find whether the word user has requested to change exists in the sentence or not.
+	int lengthOfWord = findLength(inputWord);
+	int i = 0;
+	while (i < MaxLength) {
+		if (sentence[i] == inputWord[0]) {
+			int s = selectWord(sentence, inputWord, lengthOfWord, i);
+			if (s == lengthOfWord) {
+				return true;
+				break;
+			}
+		}
+		i++;
+	}
+	return false;
+
+}
+
+
+int main() {
+	const int MaxLength = 1000;
+	char sentence[MaxLength];
+	int choice;
+
+	cout << "Enter a sentence: ";
+	cin.getline(sentence, MaxLength);
+
+	do {
+		cout << "\nMenu:" << endl;
+		cout << "1. Find and count the occurrence of a word in the sentence" << endl;
+		cout << "2. Remove a word from the sentence" << endl;
+		cout << "3. Replace a word with another word in the sentence" << endl;
+		cout << "4. Exit the program" << endl;
+
+		cout << "Enter your choice: ";
+		cin >> choice;
+
+		cin.ignore();
+
+		switch (choice) {
+		case 1: {
+			char wordToFind[MaxLength];
+			cout << "Enter the word to find: ";
+			cin.getline(wordToFind, MaxLength);
+			int count = mainFunction(sentence, MaxLength, wordToFind, 1);
+			cout << "The word \"" << wordToFind << "\" occurs " << count << " time(s) in the sentence." << endl;
+			break;
+		}
+		case 2: {
+			char wordToRemove[MaxLength];
+			cout << "Enter the word to remove: ";
+			cin.getline(wordToRemove, MaxLength);
+
+			// Enter the code for removing wordToRemove from sentence here
+			bool check = checks(sentence, wordToRemove, MaxLength);
+			if (check) {
+				mainFunction(sentence, MaxLength, wordToRemove, 2);
+				duplicateSpaces(sentence, MaxLength);
+				cout << "Word \"" << wordToRemove << "\" removed from the sentence." << endl;
+				cout << "Updated sentence: " << sentence << endl;
+			}
+			else {
+				cout << "The word \""<< wordToRemove <<"\" doesn't exist in the sentence. Invalid input" << endl;
+			}
+			break;
+		}
+		case 3: {
+			char wordToReplace[MaxLength], replacementWord[MaxLength];
+			cout << "Enter the word to replace: ";
+			cin.getline(wordToReplace, MaxLength);
+
+			// Enter the code for replacing wordToReplace with replacementWord in sentence here
+			bool check = checks(sentence, wordToReplace, MaxLength);
+			if (check) {
+				cout << "Enter the replacement word: ";
+				cin.getline(replacementWord, MaxLength);
+				replaceValue(sentence, replacementWord, wordToReplace, MaxLength);
+				cout << "Word \"" << wordToReplace << "\" replaced with \"" << replacementWord << "\"." << endl;
+				cout << "Updated sentence: " << sentence << endl;
+			}
+			else {
+				cout << "The word \"" << wordToReplace << "\" doesn't exist in the sentence. Invalid input" << endl;
+			}
+			break;
+		}
+		case 4:
+			cout << "Exiting the program. Goodbye!" << endl;
+			break;
+		default:
+			cout << "Invalid choice. Please enter a valid menu option." << endl;
+			break;
+		}
+	} while (choice != 4);
+
+	return 0;
+}
